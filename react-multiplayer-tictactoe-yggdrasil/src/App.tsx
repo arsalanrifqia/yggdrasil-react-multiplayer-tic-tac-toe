@@ -1,17 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { LoginScreen } from './components/LoginScreen';
-import { ModeSelector } from './components/ModeSelector';
-import { AIConfigModal } from './components/AIConfigModal';
-import { OnlineLobby } from './components/OnlineLobby';
-import { WaitingRoom } from './components/WaitingRoom';
-import { GameBoard } from './components/GameBoard';
-import { GameMode, AIDifficulty, RoomData } from './types';
+import React, { useState, useEffect } from "react";
+import { LoginScreen } from "./components/LoginScreen";
+import { ModeSelector } from "./components/ModeSelector";
+import { AIConfigModal } from "./components/AIConfigModal";
+import { OnlineLobby } from "./components/OnlineLobby";
+import { WaitingRoom } from "./components/WaitingRoom";
+import { GameBoard } from "./components/GameBoard";
+import { GameMode, AIDifficulty, RoomData } from "./types";
 
 function checkWinner(board: (string | null)[]) {
   const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8],
-    [0, 3, 6], [1, 4, 7], [2, 5, 8],
-    [0, 4, 8], [2, 4, 6]
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
   ];
   for (const line of lines) {
     const [a, b, c] = line;
@@ -19,24 +24,24 @@ function checkWinner(board: (string | null)[]) {
       return { winner: board[a], winningLine: line };
     }
   }
-  if (board.every(cell => cell !== null)) {
-    return { winner: 'Draw', winningLine: null };
+  if (board.every((cell) => cell !== null)) {
+    return { winner: "Draw", winningLine: null };
   }
   return null;
 }
 
 export default function App() {
   const [username, setUsername] = useState<string>(() => {
-    return localStorage.getItem('tictactoe_username') || '';
+    return localStorage.getItem("tictactoe_username") || "";
   });
 
-  const [mode, setMode] = useState<GameMode>('menu');
-  const [aiDifficulty, AIDifficultyState] = useState<AIDifficulty>('medium');
+  const [mode, setMode] = useState<GameMode>("menu");
+  const [aiDifficulty, AIDifficultyState] = useState<AIDifficulty>("medium");
   const [showAIConfig, setShowAIConfig] = useState(false);
 
   // Local game state
   const [localBoard, setLocalBoard] = useState<(string | null)[]>(Array(9).fill(null));
-  const [localTurn, setLocalTurn] = useState<'X' | 'O'>('X');
+  const [localTurn, setLocalTurn] = useState<"X" | "O">("X");
   const [localWinner, setLocalWinner] = useState<string | null>(null);
   const [localWinningLine, setLocalWinningLine] = useState<number[] | null>(null);
   const [localScores, setLocalScores] = useState({
@@ -44,7 +49,7 @@ export default function App() {
     oWins: 0,
     draws: 0,
     xStreak: 0,
-    oStreak: 0
+    oStreak: 0,
   });
 
   // Online room state
@@ -54,15 +59,19 @@ export default function App() {
   useEffect(() => {
     if (!currentRoom || !currentRoom.code) return;
 
+    const roomCode = currentRoom.code;
+
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/rooms/${currentRoom.code}`);
+        const res = await fetch(`/api/rooms/${roomCode}`);
         if (res.ok) {
           const data: RoomData = await res.json();
           setCurrentRoom(data);
+        } else {
+          console.error(`Failed to poll room: ${res.status} ${res.statusText}`);
         }
       } catch (err) {
-        console.error('Failed to poll room state:', err);
+        console.error("Failed to poll room state:", err);
       }
     }, 1500);
 
@@ -71,13 +80,13 @@ export default function App() {
 
   const handleLogin = (name: string) => {
     setUsername(name);
-    localStorage.setItem('tictactoe_username', name);
+    localStorage.setItem("tictactoe_username", name);
   };
 
   const handleLogout = () => {
-    setUsername('');
-    localStorage.removeItem('tictactoe_username');
-    setMode('menu');
+    setUsername("");
+    localStorage.removeItem("tictactoe_username");
+    setMode("menu");
   };
 
   // Local move handler
@@ -92,29 +101,29 @@ export default function App() {
     if (result) {
       setLocalWinner(result.winner);
       setLocalWinningLine(result.winningLine);
-      updateScores(result.winner, 'local');
+      updateScores(result.winner, "local");
     } else {
-      setLocalTurn(localTurn === 'X' ? 'O' : 'X');
+      setLocalTurn(localTurn === "X" ? "O" : "X");
     }
   };
 
   // AI move handler
   const handleAICellClick = (index: number) => {
-    if (localBoard[index] !== null || localWinner !== null || localTurn !== 'X') return;
+    if (localBoard[index] !== null || localWinner !== null || localTurn !== "X") return;
 
     const newBoard = [...localBoard];
-    newBoard[index] = 'X';
+    newBoard[index] = "X";
     setLocalBoard(newBoard);
 
     const result = checkWinner(newBoard);
     if (result) {
       setLocalWinner(result.winner);
       setLocalWinningLine(result.winningLine);
-      updateScores(result.winner, 'ai');
+      updateScores(result.winner, "ai");
       return;
     }
 
-    setLocalTurn('O');
+    setLocalTurn("O");
 
     // Bot move after short delay
     setTimeout(() => {
@@ -123,20 +132,20 @@ export default function App() {
   };
 
   const makeAIMove = (board: (string | null)[]) => {
-    const emptyIndices = board.map((val, idx) => val === null ? idx : null).filter((val): val is number => val !== null);
+    const emptyIndices = board.map((val, idx) => (val === null ? idx : null)).filter((val): val is number => val !== null);
     if (emptyIndices.length === 0 || checkWinner(board)) return;
 
     let moveIndex = emptyIndices[0];
 
-    if (aiDifficulty === 'easy') {
+    if (aiDifficulty === "easy") {
       moveIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-    } else if (aiDifficulty === 'medium') {
+    } else if (aiDifficulty === "medium") {
       // Try to win or block
       let found = false;
       for (const idx of emptyIndices) {
         const testBoard = [...board];
-        testBoard[idx] = 'O';
-        if (checkWinner(testBoard)?.winner === 'O') {
+        testBoard[idx] = "O";
+        if (checkWinner(testBoard)?.winner === "O") {
           moveIndex = idx;
           found = true;
           break;
@@ -145,8 +154,8 @@ export default function App() {
       if (!found) {
         for (const idx of emptyIndices) {
           const testBoard = [...board];
-          testBoard[idx] = 'X';
-          if (checkWinner(testBoard)?.winner === 'X') {
+          testBoard[idx] = "X";
+          if (checkWinner(testBoard)?.winner === "X") {
             moveIndex = idx;
             found = true;
             break;
@@ -165,32 +174,32 @@ export default function App() {
     }
 
     const newBoard = [...board];
-    newBoard[moveIndex] = 'O';
+    newBoard[moveIndex] = "O";
     setLocalBoard(newBoard);
 
     const result = checkWinner(newBoard);
     if (result) {
       setLocalWinner(result.winner);
       setLocalWinningLine(result.winningLine);
-      updateScores(result.winner, 'ai');
+      updateScores(result.winner, "ai");
     } else {
-      setLocalTurn('X');
+      setLocalTurn("X");
     }
   };
 
-  const updateScores = (winner: string, gameType: 'local' | 'ai') => {
-    setLocalScores(prev => {
+  const updateScores = (winner: string, gameType: "local" | "ai") => {
+    setLocalScores((prev) => {
       let xWins = prev.xWins;
       let oWins = prev.oWins;
       let draws = prev.draws;
       let xStreak = prev.xStreak;
       let oStreak = prev.oStreak;
 
-      if (winner === 'X') {
+      if (winner === "X") {
         xWins += 1;
         xStreak += 1;
         oStreak = 0;
-      } else if (winner === 'O') {
+      } else if (winner === "O") {
         oWins += 1;
         oStreak += 1;
         xStreak = 0;
@@ -207,57 +216,81 @@ export default function App() {
     setLocalBoard(Array(9).fill(null));
     setLocalWinner(null);
     setLocalWinningLine(null);
-    setLocalTurn('X');
+    setLocalTurn("X");
   };
 
   // Online Actions
   const handleCreateRoom = async () => {
-    const res = await fetch('/api/rooms/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+    console.log("=== Starting room creation ===");
+    const res = await fetch("/api/rooms/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
     });
+    console.log("Room creation response status:", res.status, res.ok);
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Gagal membuat room');
+      let errorMsg = "Gagal membuat room";
+      try {
+        const err = await res.json();
+        errorMsg = err.error || errorMsg;
+      } catch {
+        errorMsg = `Server error: ${res.status} ${res.statusText}`;
+      }
+      console.error("Room creation error:", errorMsg);
+      throw new Error(errorMsg);
     }
     const room: RoomData = await res.json();
+    console.log("=== Room created successfully ===", room);
     setCurrentRoom(room);
-    setMode('online_game');
+    setMode("online_game");
+    console.log("Mode set to online_game, currentRoom set");
   };
 
   const handleJoinRoom = async (code: string) => {
-    const res = await fetch('/api/rooms/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, username })
+    const res = await fetch("/api/rooms/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, username }),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Gagal bergabung ke room');
+      let errorMsg = "Gagal bergabung ke room";
+      try {
+        const err = await res.json();
+        errorMsg = err.error || errorMsg;
+      } catch {
+        errorMsg = `Server error: ${res.status} ${res.statusText}`;
+      }
+      throw new Error(errorMsg);
     }
     const room: RoomData = await res.json();
     setCurrentRoom(room);
-    setMode('online_game');
+    setMode("online_game");
   };
 
   const handleOnlineCellClick = async (index: number) => {
     if (!currentRoom || currentRoom.winner || currentRoom.board[index] !== null) return;
-    const mySymbol = currentRoom.playerX?.username === username ? 'X' : 'O';
+    const mySymbol = currentRoom.playerX?.username === username ? "X" : "O";
     if (currentRoom.turn !== mySymbol) return;
 
     try {
       const res = await fetch(`/api/rooms/${currentRoom.code}/move`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ index, symbol: mySymbol })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index, symbol: mySymbol }),
       });
       if (res.ok) {
         const room: RoomData = await res.json();
         setCurrentRoom(room);
+      } else {
+        try {
+          const err = await res.json();
+          console.error("API error:", err.error);
+        } catch {
+          console.error("API error:", res.status, res.statusText);
+        }
       }
     } catch (err) {
-      console.error('Failed to make move:', err);
+      console.error("Failed to make move:", err);
     }
   };
 
@@ -265,15 +298,22 @@ export default function App() {
     if (!currentRoom) return;
     try {
       const res = await fetch(`/api/rooms/${currentRoom.code}/reset`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
         const room: RoomData = await res.json();
         setCurrentRoom(room);
+      } else {
+        try {
+          const err = await res.json();
+          console.error("API error:", err.error);
+        } catch {
+          console.error("API error:", res.status, res.statusText);
+        }
       }
     } catch (err) {
-      console.error('Failed to reset room:', err);
+      console.error("Failed to reset room:", err);
     }
   };
 
@@ -281,15 +321,15 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  if (mode === 'menu') {
+  if (mode === "menu") {
     return (
       <ModeSelector
         username={username}
         onSelectMode={(selectedMode) => {
-          if (selectedMode === 'ai') {
+          if (selectedMode === "ai") {
             setShowAIConfig(true);
-          } else if (selectedMode === 'online_create') {
-            setMode('online_create');
+          } else if (selectedMode === "online_create") {
+            setMode("online_create");
           } else {
             setMode(selectedMode);
             resetLocalGame();
@@ -307,41 +347,34 @@ export default function App() {
         onSelectDifficulty={(diff) => {
           AIDifficultyState(diff);
           setShowAIConfig(false);
-          setMode('ai');
+          setMode("ai");
           resetLocalGame();
         }}
       />
     );
   }
 
-  if (mode === 'online_create') {
-    return (
-      <OnlineLobby
-        username={username}
-        onBack={() => setMode('menu')}
-        onCreateRoom={handleCreateRoom}
-        onJoinRoom={handleJoinRoom}
-      />
-    );
+  if (mode === "online_create") {
+    return <OnlineLobby username={username} onBack={() => setMode("menu")} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />;
   }
 
-  if (mode === 'online_game' && currentRoom) {
-    if (currentRoom.status === 'waiting') {
+  if (mode === "online_game" && currentRoom) {
+    if (currentRoom.status === "waiting") {
       return (
         <WaitingRoom
           room={currentRoom}
           onBack={() => {
             setCurrentRoom(null);
-            setMode('menu');
+            setMode("menu");
           }}
         />
       );
     }
 
-    const mySymbol = currentRoom.playerX?.username === username ? 'X' : 'O';
-    const opponentName = mySymbol === 'X' ? currentRoom.playerO?.username || 'Lawan' : currentRoom.playerX?.username || 'Lawan';
-    const playerXName = currentRoom.playerX?.username || 'Player X';
-    const playerOName = currentRoom.playerO?.username || 'Player O';
+    const mySymbol = currentRoom.playerX?.username === username ? "X" : "O";
+    const opponentName = mySymbol === "X" ? currentRoom.playerO?.username || "Lawan" : currentRoom.playerX?.username || "Lawan";
+    const playerXName = currentRoom.playerX?.username || "Player X";
+    const playerOName = currentRoom.playerO?.username || "Player O";
 
     return (
       <GameBoard
@@ -349,7 +382,7 @@ export default function App() {
         onCellClick={handleOnlineCellClick}
         xWins={currentRoom.playerX?.score || 0}
         oWins={currentRoom.playerO?.score || 0}
-        draws={0}
+        draws={currentRoom.draws || 0}
         xStreak={0}
         oStreak={0}
         playerXName={playerXName}
@@ -360,7 +393,7 @@ export default function App() {
         onReset={handleResetOnline}
         onBack={() => {
           setCurrentRoom(null);
-          setMode('menu');
+          setMode("menu");
         }}
         modeTitle="Online Room"
         roomCode={currentRoom.code}
@@ -370,7 +403,7 @@ export default function App() {
     );
   }
 
-  if (mode === 'local') {
+  if (mode === "local") {
     return (
       <GameBoard
         board={localBoard}
@@ -386,13 +419,13 @@ export default function App() {
         winner={localWinner}
         winningLine={localWinningLine}
         onReset={resetLocalGame}
-        onBack={() => setMode('menu')}
+        onBack={() => setMode("menu")}
         modeTitle="Multiplayer Lokal"
       />
     );
   }
 
-  if (mode === 'ai') {
+  if (mode === "ai") {
     return (
       <GameBoard
         board={localBoard}
@@ -408,7 +441,7 @@ export default function App() {
         winner={localWinner}
         winningLine={localWinningLine}
         onReset={resetLocalGame}
-        onBack={() => setMode('menu')}
+        onBack={() => setMode("menu")}
         modeTitle={`Lawan Bot (${aiDifficulty})`}
       />
     );
@@ -421,18 +454,18 @@ export default function App() {
 function minimax(newBoard: (string | null)[], depth: number, isMaximizing: boolean): { score: number; index?: number } {
   const result = checkWinner(newBoard);
   if (result) {
-    if (result.winner === 'O') return { score: 10 - depth };
-    if (result.winner === 'X') return { score: depth - 10 };
+    if (result.winner === "O") return { score: 10 - depth };
+    if (result.winner === "X") return { score: depth - 10 };
     return { score: 0 };
   }
 
-  const emptyIndices = newBoard.map((val, idx) => val === null ? idx : null).filter((val): val is number => val !== null);
+  const emptyIndices = newBoard.map((val, idx) => (val === null ? idx : null)).filter((val): val is number => val !== null);
 
   if (isMaximizing) {
     let bestScore = -Infinity;
     let bestMove = emptyIndices[0];
     for (const idx of emptyIndices) {
-      newBoard[idx] = 'O';
+      newBoard[idx] = "O";
       const score = minimax(newBoard, depth + 1, false).score;
       newBoard[idx] = null;
       if (score > bestScore) {
@@ -445,7 +478,7 @@ function minimax(newBoard: (string | null)[], depth: number, isMaximizing: boole
     let bestScore = Infinity;
     let bestMove = emptyIndices[0];
     for (const idx of emptyIndices) {
-      newBoard[idx] = 'X';
+      newBoard[idx] = "X";
       const score = minimax(newBoard, depth + 1, true).score;
       newBoard[idx] = null;
       if (score < bestScore) {

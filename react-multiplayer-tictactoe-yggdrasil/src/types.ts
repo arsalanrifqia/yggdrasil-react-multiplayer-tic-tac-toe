@@ -1,6 +1,6 @@
-export type GameMode = 'menu' | 'local' | 'ai' | 'online_create' | 'online_join' | 'online_game';
+export type GameMode = "menu" | "local" | "ai" | "online_create" | "online_join" | "online_game";
 
-export type AIDifficulty = 'easy' | 'medium' | 'hard';
+export type AIDifficulty = "easy" | "medium" | "hard";
 
 export interface Scoreboard {
   xWins: number;
@@ -20,8 +20,9 @@ export interface RoomData {
   playerX: Player | null;
   playerO: Player | null;
   board: (string | null)[];
-  turn: 'X' | 'O';
+  turn: "X" | "O";
   winner: string | null;
   winningLine: number[] | null;
-  status: 'waiting' | 'playing' | 'finished';
+  status: "waiting" | "playing" | "finished";
+  draws: number;
 }
