@@ -1,0 +1,6 @@
+{
+  "name": "Tic Tac Toe Arena",
+  "description": "Tic Tac Toe web game with scoreboard, local multiplayer, AI mode, username login, and unique room codes for online play with friends.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
