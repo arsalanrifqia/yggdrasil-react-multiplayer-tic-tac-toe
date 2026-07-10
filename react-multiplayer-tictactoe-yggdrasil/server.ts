@@ -27,12 +27,12 @@ function loadRooms(): Map<string, Room> {
   try {
     if (fs.existsSync(ROOMS_FILE)) {
       const data = fs.readFileSync(ROOMS_FILE, "utf-8");
-      const obj = JSON.parse(data);
-      const roomsMap = new Map(Object.entries(obj));
+      const obj = JSON.parse(data) as Record<string, Room>;
+      const roomsMap = new Map<string, Room>(Object.entries(obj));
 
       // Migrate old rooms without draws field
       for (const [code, room] of roomsMap.entries()) {
-        if (room && typeof room === "object" && !("draws" in room)) {
+        if (room.draws === undefined) {
           room.draws = 0;
         }
       }
@@ -293,12 +293,12 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*all", (req, res) => {
+    app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
